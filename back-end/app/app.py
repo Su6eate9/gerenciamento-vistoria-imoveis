@@ -1,11 +1,22 @@
 from flask import Flask
 from flask_mail import Mail
+from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 import os
+from database import db, init_db
 
 load_dotenv()
 # Inicializar o Flask
 app = Flask(__name__)
+
+
+
+# Configuração do caminho do banco de dados SQLite
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'prototipo1.db')}"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
 
 # Configurações do Flask-Mail
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
@@ -30,6 +41,9 @@ app.register_blueprint(imobiliaria_bp)
 app.register_blueprint(vistoriador_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(auth_bp)
+
+# Inicializa o banco de dados
+init_db(app)
 
 if __name__ == '__main__':
     app.run(debug=True)
