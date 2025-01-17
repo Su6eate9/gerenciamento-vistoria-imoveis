@@ -94,5 +94,13 @@ class Relatorio:
         self.textos = textos
         self.fotos = fotos
 
+class Notificacao:
+    def __init__(self, id, mensagem, destinatario_id, data_criacao, status="não lida"):
+        self.id = id
+        self.mensagem = mensagem
+        self.destinatario_id = destinatario_id
+        self.data_criacao = data_criacao
+        self.status = status
+
 
 

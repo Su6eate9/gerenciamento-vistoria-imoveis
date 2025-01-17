@@ -92,7 +92,7 @@ def criar_tabelas():
 
     # Confirma as mudanças e fecha a conexão
     conn.commit()
-    conn.close()dara
+    conn.close()
     print("Tabelas criadas com sucesso!")
 
 # Chama a função para criar as tabelas
