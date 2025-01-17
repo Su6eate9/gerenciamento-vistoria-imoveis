@@ -1,33 +1,21 @@
-from flask import jsonify
-from datetime import datetime
-from utils.helpers import find_by_id
-from services.notificacao_service import NotificacaoService
+from models import Vistoria
 
-VISTORIAS_DB = []
-RELATORIOS_DB = []
-
-class VistoriadorService:
+class DashboardService:
     @staticmethod
-    def registrar_inspecao(id, data):
-        # Lógica para registrar inspeção
-        vistoria = find_by_id(VISTORIAS_DB, data.get("vistoria_id"))
-        if not vistoria or vistoria.get("vistoriador_id") != id:
-            return jsonify({"error": "Vistoria não encontrada ou não atribuída ao vistoriador."}), 404
+    def listar_vistorias(params):
+        # Parâmetros de paginação
+        pagina = int(params.get("pagina", 1))
+        limite = int(params.get("limite", 10))
+        offset = (pagina - 1) * limite
 
-        if not all(k in data for k in ("observacoes", "fotos")):
-            return jsonify({"error": "Dados incompletos para registrar a inspeção."}), 400
+        # Consulta ao banco de dados com paginação
+        vistorias = Vistoria.query.offset(offset).limit(limite).all()
+        total = Vistoria.query.count()
 
-        relatorio = {
-            "id": len(RELATORIOS_DB) + 1,
-            "vistoria_id": vistoria["id"],
-            "vistoriador_id": id,
-            "observacoes": data["observacoes"],
-            "fotos": data["fotos"],
-            "data_criacao": datetime.utcnow()
-        }
-        RELATORIOS_DB.append(relatorio)
-
-        mensagem = f"O relatório para a vistoria {vistoria['id']} foi registrado pelo vistoriador {id}."
-        NotificacaoService.criar_notificacao(mensagem, destinatario_id=vistoria.get("proprietario_id"))
-
-        return jsonify({"message": "Relatório registrado com sucesso.", "relatorio": relatorio}), 200
+        # Formatar a resposta
+        return {
+            "pagina": pagina,
+            "limite": limite,
+            "total_vistorias": total,
+            "vistorias": [v.to_dict() for v in vistorias]  # Implementar método `to_dict` no modelo
+        }, 200

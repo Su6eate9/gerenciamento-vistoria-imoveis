@@ -24,6 +24,16 @@ class Imovel(db.Model):
     proprietario_id = db.Column(db.Integer, db.ForeignKey('funcionarios.id'))
     proprietario = db.relationship('Funcionario', backref='imoveis')
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "descricao": self.descricao,
+            "endereco": self.endereco,
+            "tipo": self.tipo,
+            "status": self.status,
+            "proprietario_id": self.proprietario_id
+        }
+
 # Tabela de Vistorias
 class Vistoria(db.Model):
     __tablename__ = 'vistorias'
@@ -32,6 +42,15 @@ class Vistoria(db.Model):
     vistoriador_id = db.Column(db.Integer, db.ForeignKey('funcionarios.id'), nullable=False)
     data = db.Column(db.String, nullable=False)
     status = db.Column(db.String, default='Pendente')
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "imovel_id": self.imovel_id,
+            "vistoriador_id": self.vistoriador_id,
+            "data": self.data,
+            "status": self.status
+        }
 
 # Tabela de Agendamentos
 class Agendamento(db.Model):

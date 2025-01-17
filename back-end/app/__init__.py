@@ -1,9 +1,19 @@
 from .models import (
     Funcionario,
-    Imobiliaria,
-    Vistoriador,
     Agendamento,
     Vistoria,
     Imovel,
-    Relatorio
+    Relatorio,
+    Foto,
+    Notificacao
 )
+
+__all__ = [
+    "Funcionario",
+    "Agendamento",
+    "Vistoria",
+    "Imovel",
+    "Relatorio",
+    "Foto",
+    "Notificacao"
+]

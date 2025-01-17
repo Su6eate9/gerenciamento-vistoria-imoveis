@@ -4,45 +4,47 @@ from app import mail
 import jwt
 import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+from models import Funcionario  # Substitua pelo nome correto do modelo
+from database import db  # Para salvar mudanças no banco
+import os
 
-# Simulação de base de dados de usuários
-#Conferir integração com o BD
-USERS_DB = [
-    {"id": 1, "username": "admin", "password": generate_password_hash("admin123"), "email": "admin@example.com"},
-    {"id": 2, "username": "vistoriador1", "password": generate_password_hash("password123"), "email": "vistoriador@example.com"},
-]
-
-SECRET_KEY = "LaraCroftTomb69Sharpei"  # Substituir por uma chave secreta real
+# Chave secreta obtida das variáveis de ambiente
+SECRET_KEY = os.getenv("SECRET_KEY", "chave_super_secreta")  # Substituir para produção
 
 class AuthService:
     @staticmethod
     def login(data):
         username = data.get("username")
         password = data.get("password")
-        user = next((u for u in USERS_DB if u["username"] == username), None)
 
-        if not user or not check_password_hash(user["password"], password):
+        # Busca o usuário no banco de dados
+        user = Funcionario.query.filter_by(email=username).first()  # Assumindo que o e-mail é o username
+        if not user or not check_password_hash(user.senha, password):
             return jsonify({"error": "Credenciais inválidas."}), 401
 
         # Gerar JWT
         token = jwt.encode({
-            "id": user["id"],
+            "id": user.id,
             "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
         }, SECRET_KEY, algorithm="HS256")
 
         return jsonify({"message": "Login bem-sucedido.", "token": token}), 200
 
-
     @staticmethod
     def recover_password(data):
         email = data.get("email")
-        user = next((u for u in USERS_DB if u["email"] == email), None)
 
+        # Busca o usuário no banco de dados
+        user = Funcionario.query.filter_by(email=email).first()
         if not user:
             return jsonify({"error": "Usuário não encontrado."}), 404
 
         # Gerar o link de recuperação
-        recovery_link = f"http://example.com/recover-password/{user['id']}"
+        recovery_token = jwt.encode({
+            "id": user.id,
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+        }, SECRET_KEY, algorithm="HS256")
+        recovery_link = f"http://localhost:5000/recover-password/{recovery_token}"  # Ajuste o domínio para produção
 
         # Enviar o e-mail
         try:
@@ -56,7 +58,7 @@ class AuthService:
             return jsonify({"message": "E-mail de recuperação enviado com sucesso."}), 200
         except Exception as e:
             return jsonify({"error": f"Falha ao enviar e-mail: {str(e)}"}), 500
-    
+
     @staticmethod
     def reset_password(token, data):
         try:
@@ -68,12 +70,13 @@ class AuthService:
         except jwt.InvalidTokenError:
             return jsonify({"error": "Token inválido."}), 400
 
-        # Localizar o usuário
-        user = next((u for u in USERS_DB if u["id"] == user_id), None)
+        # Localizar o usuário no banco de dados
+        user = Funcionario.query.get(user_id)
         if not user:
             return jsonify({"error": "Usuário não encontrado."}), 404
 
         # Redefinir a senha
         new_password = data.get("new_password")
-        user["password"] = generate_password_hash(new_password)
+        user.senha = generate_password_hash(new_password)
+        db.session.commit()  # Salvar mudanças no banco
         return jsonify({"message": "Senha redefinida com sucesso."}), 200
