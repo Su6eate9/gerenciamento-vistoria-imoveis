@@ -1,9 +1,11 @@
 from flask import Blueprint, request, jsonify
 from services.funcionario_service import FuncionarioService
+from utils.decorators import autorizacao_permitida
 
 funcionario_bp = Blueprint('funcionario', __name__)
 
 @funcionario_bp.route('/funcionario', methods=['POST'])
+@autorizacao_permitida(["Imobiliaria"])  # Apenas Imobiliarias podem criar funcionários
 def create_funcionario():
     try:
         data = request.json
@@ -15,7 +17,9 @@ def create_funcionario():
     except Exception as e:
         return jsonify({"error": f"Erro inesperado: {str(e)}"}), 500
 
+
 @funcionario_bp.route('/funcionario/<int:id>/agendar_vistoria', methods=['POST'])
+@autorizacao_permitida(["Imobiliaria", "Vistoriador"])  # Ambos os tipos podem agendar vistorias
 def agendar_vistoria(id):
     try:
         data = request.json
@@ -27,7 +31,9 @@ def agendar_vistoria(id):
     except Exception as e:
         return jsonify({"error": f"Erro inesperado: {str(e)}"}), 500
 
+
 @funcionario_bp.route('/funcionario/<int:id>/reagendar_vistoria', methods=['PUT'])
+@autorizacao_permitida(["Imobiliaria", "Vistoriador"])  # Ambos os tipos podem reagendar vistorias
 def reagendar_vistoria(id):
     try:
         data = request.json

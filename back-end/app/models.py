@@ -1,17 +1,30 @@
 from database import db
 
-# Tabela de Funcionários
 class Funcionario(db.Model):
     __tablename__ = 'funcionarios'
+
     id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String, nullable=False)
-    email = db.Column(db.String, unique=True, nullable=False)
-    telefone = db.Column(db.String)
-    senha = db.Column(db.String, nullable=False)
-    creci = db.Column(db.String)
-    tipo = db.Column(db.String, nullable=False)  # 'Imobiliaria' ou 'Vistoriador'
-    cpf = db.Column(db.String)  # Apenas para vistoriadores
-    cnpj = db.Column(db.String)  # Apenas para imobiliárias
+    nome = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    telefone = db.Column(db.String(15), nullable=True)
+    senha = db.Column(db.String(200), nullable=False)
+    tipo = db.Column(db.String(20), nullable=False)  # "Imobiliaria" ou "Vistoriador"
+    creci = db.Column(db.String(20), nullable=True)
+    cnpj = db.Column(db.String(18), nullable=True)  # Apenas para Imobiliaria
+    cpf = db.Column(db.String(14), nullable=True)  # Apenas para Vistoriador
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "nome": self.nome,
+            "email": self.email,
+            "telefone": self.telefone,
+            "tipo": self.tipo,
+            "creci": self.creci,
+            "cnpj": self.cnpj if self.tipo == "Imobiliaria" else None,
+            "cpf": self.cpf if self.tipo == "Vistoriador" else None,
+        }
+
 
 # Tabela de Imóveis
 class Imovel(db.Model):

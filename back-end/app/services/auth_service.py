@@ -1,15 +1,16 @@
 from flask import jsonify
 from flask_mail import Message
-from app import mail
+from extensions import mail
 import jwt
 import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import Funcionario  # Substitua pelo nome correto do modelo
-from database import db  # Para salvar mudanças no banco
+from database import db
 import os
 
 # Chave secreta obtida das variáveis de ambiente
 SECRET_KEY = os.getenv("SECRET_KEY", "chave_super_secreta")  # Substituir para produção
+
 
 class AuthService:
     @staticmethod
@@ -17,8 +18,11 @@ class AuthService:
         username = data.get("username")
         password = data.get("password")
 
+        if not username or not password:
+            return jsonify({"error": "Username e senha são obrigatórios."}), 400
+
         # Busca o usuário no banco de dados
-        user = Funcionario.query.filter_by(email=username).first()  # Assumindo que o e-mail é o username
+        user = Funcionario.query.filter_by(email=username).first()
         if not user or not check_password_hash(user.senha, password):
             return jsonify({"error": "Credenciais inválidas."}), 401
 
@@ -33,6 +37,8 @@ class AuthService:
     @staticmethod
     def recover_password(data):
         email = data.get("email")
+        if not email:
+            return jsonify({"error": "Email é obrigatório."}), 400
 
         # Busca o usuário no banco de dados
         user = Funcionario.query.filter_by(email=email).first()
@@ -50,7 +56,7 @@ class AuthService:
         try:
             msg = Message(
                 subject="Recuperação de Senha",
-                sender="techvanguardsolutions.imoveis@gmail.com",
+                sender=os.getenv("MAIL_DEFAULT_SENDER"),
                 recipients=[email],
                 body=f"Olá, clique no link abaixo para recuperar sua senha:\n\n{recovery_link}"
             )
@@ -77,6 +83,9 @@ class AuthService:
 
         # Redefinir a senha
         new_password = data.get("new_password")
+        if not new_password or len(new_password) < 8:
+            return jsonify({"error": "A senha deve ter pelo menos 8 caracteres."}), 400
+
         user.senha = generate_password_hash(new_password)
-        db.session.commit()  # Salvar mudanças no banco
+        db.session.commit()
         return jsonify({"message": "Senha redefinida com sucesso."}), 200
