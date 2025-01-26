@@ -1,42 +1,35 @@
 from services.notificacao_service import NotificacaoService
 from models import Funcionario, Agendamento  # Importa os modelos ORM
 from database import db  # Para gerenciar as transações do banco de dados
-from datetime import datetime
-from werkzeug.security import generate_password_hash
 from flask import jsonify
-from models import Funcionario
-from database import db
+
 
 class FuncionarioService:
     @staticmethod
-    def create_funcionario(data):
-        # Validação de campos obrigatórios
-        if not all(k in data for k in ("nome", "email", "senha", "tipo")):
-            return jsonify({"error": "Dados incompletos para criar funcionário."}), 400
+    def vincular_vistoriador(creci, imobiliaria_id):
+        """
+        Vincula um Vistoriador a uma Imobiliária usando o CRECI.
+        """
+        # Verificar se o CRECI é válido
+        vistoriador = Funcionario.query.filter_by(creci=creci, tipo="Vistoriador").first()
+        if not vistoriador:
+            return jsonify({"error": "Vistoriador com o CRECI fornecido não encontrado."}), 404
 
-        if data["tipo"] == "Imobiliaria" and not data.get("cnpj"):
-            return jsonify({"error": "CNPJ é obrigatório para Imobiliárias."}), 400
-        if data["tipo"] == "Vistoriador" and not data.get("cpf"):
-            return jsonify({"error": "CPF é obrigatório para Vistoriadores."}), 400
+        # Verificar se já está vinculado a outra imobiliária
+        if vistoriador.imobiliaria_id:
+            return jsonify({"error": "Este Vistoriador já está vinculado a outra Imobiliária."}), 400
 
-        # Criar o funcionário
-        funcionario = Funcionario(
-            nome=data["nome"],
-            email=data["email"],
-            telefone=data.get("telefone"),
-            senha=generate_password_hash(data["senha"]),
-            creci=data.get("creci"),
-            tipo=data["tipo"],
-            cnpj=data.get("cnpj"),
-            cpf=data.get("cpf")
-        )
-        db.session.add(funcionario)
+        # Vincular o Vistoriador à Imobiliária
+        vistoriador.imobiliaria_id = imobiliaria_id
         db.session.commit()
 
-        return jsonify({"message": "Funcionário criado com sucesso.", "funcionario": funcionario.to_dict()}), 201
+        return jsonify({"message": "Vistoriador vinculado com sucesso.", "vistoriador": vistoriador.to_dict()}), 200
 
     @staticmethod
     def agendar_vistoria(id, data):
+        """
+        Agenda uma vistoria para o funcionário especificado.
+        """
         # Busca o funcionário
         funcionario = Funcionario.query.get(id)
         if not funcionario:
@@ -65,6 +58,9 @@ class FuncionarioService:
 
     @staticmethod
     def reagendar_vistoria(id, data):
+        """
+        Reagenda uma vistoria para o funcionário especificado.
+        """
         # Busca o agendamento
         agendamento = Agendamento.query.filter_by(id=data.get("agendamento_id"), funcionario_id=id).first()
         if not agendamento:

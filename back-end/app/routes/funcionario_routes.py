@@ -4,16 +4,20 @@ from utils.decorators import autorizacao_permitida
 
 funcionario_bp = Blueprint('funcionario', __name__)
 
-@funcionario_bp.route('/funcionario', methods=['POST'])
-@autorizacao_permitida(["Imobiliaria"])  # Apenas Imobiliarias podem criar funcionários
-def create_funcionario():
+@funcionario_bp.route('/funcionario/vincular_vistoriador', methods=['PUT'])
+@autorizacao_permitida(["Imobiliaria"])  # Apenas Imobiliarias podem acessar
+def vincular_vistoriador():
+    """
+    Endpoint para vincular um Vistoriador a uma Imobiliária.
+    """
     try:
         data = request.json
-        # Validação dos dados recebidos
-        if not data or not all(key in data for key in ["email", "telefone", "senha", "creci", "nome", "tipo"]):
-            return jsonify({"error": "Dados incompletos para criar o funcionário."}), 400
+        creci = data.get("creci")
+        if not creci:
+            return jsonify({"error": "CRECI é obrigatório para vincular um Vistoriador."}), 400
 
-        return FuncionarioService.create_funcionario(data)
+        imobiliaria_id = request.user_id  # Obtido do token JWT
+        return FuncionarioService.vincular_vistoriador(creci, imobiliaria_id)
     except Exception as e:
         return jsonify({"error": f"Erro inesperado: {str(e)}"}), 500
 
@@ -21,6 +25,9 @@ def create_funcionario():
 @funcionario_bp.route('/funcionario/<int:id>/agendar_vistoria', methods=['POST'])
 @autorizacao_permitida(["Imobiliaria", "Vistoriador"])  # Ambos os tipos podem agendar vistorias
 def agendar_vistoria(id):
+    """
+    Endpoint para agendar uma vistoria. Acesso permitido para Imobiliarias e Vistoriadores.
+    """
     try:
         data = request.json
         # Validação dos dados recebidos
@@ -35,6 +42,9 @@ def agendar_vistoria(id):
 @funcionario_bp.route('/funcionario/<int:id>/reagendar_vistoria', methods=['PUT'])
 @autorizacao_permitida(["Imobiliaria", "Vistoriador"])  # Ambos os tipos podem reagendar vistorias
 def reagendar_vistoria(id):
+    """
+    Endpoint para reagendar uma vistoria. Acesso permitido para Imobiliarias e Vistoriadores.
+    """
     try:
         data = request.json
         # Validação dos dados recebidos

@@ -9,9 +9,9 @@ class Funcionario(db.Model):
     telefone = db.Column(db.String(15), nullable=True)
     senha = db.Column(db.String(200), nullable=False)
     tipo = db.Column(db.String(20), nullable=False)  # "Imobiliaria" ou "Vistoriador"
-    creci = db.Column(db.String(20), nullable=True)
-    cnpj = db.Column(db.String(18), nullable=True)  # Apenas para Imobiliaria
-    cpf = db.Column(db.String(14), nullable=True)  # Apenas para Vistoriador
+    cnpj = db.Column(db.String(18), unique=True, nullable=True)  # Apenas para Imobiliaria
+    creci = db.Column(db.String(7), unique=True, nullable=True)  # Apenas para Vistoriador
+
 
     def to_dict(self):
         return {
@@ -20,10 +20,10 @@ class Funcionario(db.Model):
             "email": self.email,
             "telefone": self.telefone,
             "tipo": self.tipo,
-            "creci": self.creci,
-            "cnpj": self.cnpj if self.tipo == "Imobiliaria" else None,
-            "cpf": self.cpf if self.tipo == "Vistoriador" else None,
+            "creci": self.creci if self.tipo == "Vistoriador" else None,
+            "cnpj": self.cnpj if self.tipo == "Imobiliaria" else None
         }
+
 
 
 # Tabela de Imóveis
@@ -50,20 +50,24 @@ class Imovel(db.Model):
 # Tabela de Vistorias
 class Vistoria(db.Model):
     __tablename__ = 'vistorias'
+
     id = db.Column(db.Integer, primary_key=True)
-    imovel_id = db.Column(db.Integer, db.ForeignKey('imoveis.id'), nullable=False)
-    vistoriador_id = db.Column(db.Integer, db.ForeignKey('funcionarios.id'), nullable=False)
-    data = db.Column(db.String, nullable=False)
-    status = db.Column(db.String, default='Pendente')
-    
+    data = db.Column(db.Date, nullable=False)
+    horario = db.Column(db.Time, nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="Pendente")
+    vistoriador_id = db.Column(db.Integer, db.ForeignKey('funcionarios.id'))
+    imovel_id = db.Column(db.Integer, db.ForeignKey('imoveis.id'))
+
     def to_dict(self):
         return {
             "id": self.id,
-            "imovel_id": self.imovel_id,
+            "data": str(self.data),
+            "horario": str(self.horario),
+            "status": self.status,
             "vistoriador_id": self.vistoriador_id,
-            "data": self.data,
-            "status": self.status
+            "imovel_id": self.imovel_id
         }
+
 
 # Tabela de Agendamentos
 class Agendamento(db.Model):
